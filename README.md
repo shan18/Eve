@@ -1,4 +1,4 @@
 # Eve
 
-A conversational chatbot built using Deep Natural Language Processing.
+A conversational chatbot built using Deep Learning and Natural Language Processing.
 
