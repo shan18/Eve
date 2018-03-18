@@ -102,3 +102,36 @@ answers_int2words = {w_i: w for w, w_i in answers_words2int.items()}
 # add <EOS> to end of each answer
 for i in range(len(answers_clean)):
     answers_clean[i] += ' <EOS>'
+
+# translate all questions and answers to integers and
+# replace filtered out words by <OUT>
+questions_to_int = []
+for question in questions_clean:
+    clean_question = []
+    for word in question.split():
+        if word in questions_words2int:
+            clean_question.append(questions_words2int[words])
+        else:
+            clean_question.append(questions_words2int['<OUT>'])
+    questions_to_int.append(clean_question)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
