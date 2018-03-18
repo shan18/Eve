@@ -110,28 +110,27 @@ for question in questions_clean:
     clean_question = []
     for word in question.split():
         if word in questions_words2int:
-            clean_question.append(questions_words2int[words])
+            clean_question.append(questions_words2int[word])
         else:
             clean_question.append(questions_words2int['<OUT>'])
     questions_to_int.append(clean_question)
+answers_to_int = []
+for answer in answers_clean:
+    clean_answer = []
+    for word in answer.split():
+        if word in answers_words2int:
+            clean_answer.append(answers_words2int[word])
+        else:
+            clean_answer.append(answers_words2int['<OUT>'])
+    answers_to_int.append(clean_answer)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Sort questions and answers based on the length of questions
+# This improves the training speed by reducing the padding
+# Exclude the questions that are too long
+sorted_clean_questions = []
+sorted_clean_answers = []
+for length in range(1, 25+1):  # max length = 25
+    for idx, value in enumerate(questions_to_int):
+        if len(value) == length:
+            sorted_clean_questions.append(questions_to_int[idx])
+            sorted_clean_answers.append(answers_to_int[idx])
