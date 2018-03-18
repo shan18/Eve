@@ -20,7 +20,7 @@ def clean_text(text):
     text = re.sub(r"\'d", ' would', text)
     text = re.sub(r"won't", 'will not', text)
     text = re.sub(r"can't", 'cannot', text)
-    text = re.sub(r"[-()\"#/@;:<>{}+=-|.?,]", '', text)
+    text = re.sub(r"[-()\"#/@;:<>{}+=|.?,]", '', text)
     return text
 
 
@@ -58,4 +58,47 @@ answers_clean = []
 for answer in answers:
     answers_clean.append(clean_text(answer))
 
-print(answers_clean[0])
+# Map each word to its number of occurances
+word2count = {}
+for question in questions_clean:
+    for word in question.split():
+        if word not in word2count:
+            word2count[word] = 1
+        else:
+            word2count[word] += 1
+for answer in answers_clean:
+    for word in answer.split():
+        if word not in word2count:
+            word2count[word] = 1
+        else:
+            word2count[word] += 1
+
+# remove the less frequent words based on a threshold and
+# map the questions words and answer words to an unique integer
+threshold = 20
+word_number = 1
+questions_words2int = {}
+answers_words2int = {}
+for word, count in word2count.items():
+    if count >= threshold:
+        questions_words2int[word] = word_number
+        answers_words2int[word] = word_number
+        word_number += 1
+
+
+# Add the last tokens to the dictionaries
+# <SOS>: Start of Sentence
+# <EOS>: End of Sentence
+# <PAD>: Padding, so that the data remains of equal length
+# <OUT>: Placeholder tag to replace all the words filtered out by the dictionaries
+tokens = ['<PAD>', '<EOS>', '<OUT>', '<SOS>']  # order is important
+for token in tokens:
+    questions_words2int[token] = len(questions_words2int) + 1
+    answers_words2int[token] = len(answers_words2int) + 1
+
+# create inverse mapping for answers_words2int dictionary
+answers_int2words = {w_i: w for w, w_i in answers_words2int.items()}
+
+# add <EOS> to end of each answer
+for i in range(len(answers_clean)):
+    answers_clean[i] += ' <EOS>'
