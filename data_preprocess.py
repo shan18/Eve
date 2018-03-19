@@ -1,8 +1,5 @@
-# Importing the necessary packages
-import numpy as np
-import tensorflow as tf
+# Import the necessary packages
 import re
-import time
 
 
 def clean_text(text):
