@@ -32,7 +32,7 @@ def encoder_rnn(rnn_inputs, rnn_size, num_layers, keep_prob, sequence_length):
             cell_bw=encoder_cell,
             sequence_length=sequence_length,
             inputs=rnn_inputs,
-            dtype=float32
+            dtype=tf.float32
     )
     return encoder_state
 
