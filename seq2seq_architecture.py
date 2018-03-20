@@ -20,13 +20,13 @@ def preprocess_targets(targets, word2int, batch_size):
     return preprocessed_targets
 
 
-# Encoder RNN layer
+# Encoder RNN
 def encoder_rnn(rnn_inputs, rnn_size, num_layers, keep_prob, sequence_length):
     """ rnn_size: number of input tensors to the layer
         sequence_length: length of the sequence of questions in each batch """
     lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
     lstm_dropout = tf.contrib.rnn.DropoutWrapper(lstm, input_keep_prob=keep_prob)
-    encoder_cell = tf.contrib.rnn.MultiRNNCell(lstm_dropout)
+    encoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * num_layers)
     _encoder_output, encoder_state = tf.nn.bidirectional_dynamic_rnn(
             cell_fw=encoder_cell,
             cell_bw=encoder_cell,
@@ -62,10 +62,7 @@ def decode_training_set(encoder_state, decoder_cell, decoder_embedded_input, seq
 
 # Decode test/validation set
 def decode_test_set(encoder_state, decoder_cell, decoder_embeddings_matrix, sos_id, eos_id, maximum_length, num_words, sequence_length, decoding_scope, output_function, keep_prob, batch_size):
-    """ decoder_embedded_input: word embeddings
-        decoding_scope: instance of variable_scope class that wraps tensorflow variables
-        
-        There is no need for decoder_embeddings_matrix and sequence_length in dynamic_rnn_decoder and there is
+    """ There is no need for decoder_embeddings_matrix and sequence_length in dynamic_rnn_decoder and there is
         also no need for dropout as these are only required during the training. """
     attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
     # See docs: https://www.tensorflow.org/versions/r1.0/api_docs/python/tf/contrib/seq2seq/prepare_attention
@@ -93,3 +90,69 @@ def decode_test_set(encoder_state, decoder_cell, decoder_embeddings_matrix, sos_
             scope=decoding_scope
     )
     return test_predictions
+
+
+# Decoder RNN
+def decoder_rnn(decoder_embedded_input, decoder_embeddings_matrix, encoder_state, num_words, sequence_length, rnn_size, num_layers, word2int, keep_prob, batch_size):
+    """ There will be some training required in decoding, thus we need the dropout parameter keep_prob """
+    with tf.variable_scope('decoding') as decoding_scope:
+        lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
+        lstm_dropout = tf.contrib.rnn.DropoutWrapper(lstm, input_keep_prob=keep_prob)
+        decoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * num_layers)
+        weights = tf.truncated_normal_initializer(stddev=0.1)
+        biases = tf.zeros_initializer()
+        output_function = lambda x: tf.contrib.layers.fully_connected(
+                x,
+                num_words,
+                None,
+                scope=decoding_scope,
+                weights_initializer=weights,
+                biases_initializer=biases
+        )
+        training_predictions = decode_training_set(
+                encoder_state,
+                decoder_cell,
+                decoder_embedded_input,
+                sequence_length,
+                decoding_scope,
+                output_function,
+                keep_prob,
+                batch_size
+        )
+        decoding_scope.reuse_variables()
+        test_predictions = decode_test_set(
+                encoder_state,
+                decoder_cell,
+                decoder_embeddings_matrix,
+                word2int['<SOS>'],
+                word2int['<EOS>'],
+                sequence_length - 1,
+                num_words,
+                decoding_scope,
+                output_function,
+                keep_prob,
+                batch_size
+            )
+        return training_predictions, test_predictions
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
