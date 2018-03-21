@@ -102,7 +102,8 @@ def decode_test_set(
 
         :note:
         There is no need for decoder_embeddings_matrix and sequence_length in dynamic_rnn_decoder and, there is
-        also no need for dropout as they are only required during the training. """
+        also no need for dropout as they are only required during the training.
+    """
     attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
     attention_keys, attention_values, attention_score_function, attention_construct_function =\
         tf.contrib.seq2seq.prepare_attention(
