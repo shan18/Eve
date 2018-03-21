@@ -55,7 +55,7 @@ answers_clean = []
 for answer in answers:
     answers_clean.append(clean_text(answer))
 
-# Map each word to its number of occurances
+# Map each word to its number of occurrences
 word2count = {}
 for question in questions_clean:
     for word in question.split():
