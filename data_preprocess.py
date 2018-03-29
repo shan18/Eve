@@ -166,6 +166,9 @@ def preprocess_input():
         Step 7: Add last tokens to the dataset
         Step 8: Sort the dataset to improve training time
     """
+
+    preprocessed_data = {}
+
     # Import the dataset
     lines = open('dataset/movie_lines.txt', encoding='utf-8', errors='ignore').read().split('\n')
     conversations = open('dataset/movie_conversations.txt', encoding='utf-8', errors='ignore').read().split('\n')
@@ -187,7 +190,13 @@ def preprocess_input():
         questions_clean, questions_words2int, answers_clean, answers_words2int
     )
     sorted_clean_questions, sorted_clean_answers = sort_translated_data(questions_to_int, answers_to_int)
-    return sorted_clean_questions, sorted_clean_answers
+
+    preprocessed_data['questions_words2int'] = questions_words2int
+    preprocessed_data['answers_words2int'] = answers_words2int
+    preprocessed_data['answers_int2words'] = answers_int2words
+    preprocessed_data['sorted_clean_questions'] = sorted_clean_questions
+    preprocessed_data['sorted_clean_answers'] = sorted_clean_answers
+    return preprocessed_data
 
 
 if __name__ == '__main__':
