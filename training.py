@@ -49,3 +49,22 @@ training_predictions, test_predictions = seq2seq_model(
     num_layers,
     preprocessed_data['questions_words2int']
 )
+
+# Set up the Loss Error, the Optimizer and Gradient Clipping
+with tf.name_scope('optimization'):
+    loss_error = tf.contrib.seq2seq.sequence_loss(
+        training_predictions,
+        targets,
+        tf.ones([input_shape[0], sequence_length])  # Initialize the weights by 1
+    )
+    optimizer = tf.train.AdamOptimizer(learning_rate)
+    gradients = optimizer.compute_gradients(loss_error)
+
+    # Every gradient tensor in the graph also has a variable attached to it.
+    # Thus, to apply clipping to all the gradients, two for loops are required,
+    # one for the gradient tensor and the other for the variable attached to it.
+    clipped_gradients = [
+        (tf.clip_by_value(grad_tensor, -5., 5.), grad_variable)
+        for grad_tensor, grad_variable in gradients if grad_tensor is not None  # Check if the grad_tensor exists
+    ]
+    optimizer_gradient_clipping = optimizer.apply_gradients(clipped_gradients)
