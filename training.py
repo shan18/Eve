@@ -68,3 +68,23 @@ with tf.name_scope('optimization'):
         for grad_tensor, grad_variable in gradients if grad_tensor is not None  # Check if the grad_tensor exists
     ]
     optimizer_gradient_clipping = optimizer.apply_gradients(clipped_gradients)
+
+
+def apply_padding(batch_of_sequences, word2int):
+    ''' Pad the sequences with <PAD> token
+
+        :example:
+        Question: [ 'Who', 'are', 'you' ]
+        Answer: [ '<SOS>', 'I', 'am', 'a', 'bot', '.', '<EOS>']
+
+        After padding, the question and the answer becomes of equal length.
+        Question (padded): [ 'Who', 'are', 'you' , '<PAD>', '<PAD>', '<PAD>', '<PAD>', '<PAD>']
+        Answer (padded): [ '<SOS>', 'I', 'am', 'a', 'bot', '.', '<EOS>', '<PAD>']
+
+        :note:
+        The padding should be done in such a way that each sentence of a batch has same length.
+    '''
+    max_sequence_length = len(max(batch_of_sequences, key=len))
+    return [sequence.extend(
+        [word2int['<PAD>']] * (max_sequence_length - len(sequence))
+    ) for sequence in batch_of_sequences]
