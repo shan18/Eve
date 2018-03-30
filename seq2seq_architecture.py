@@ -27,8 +27,11 @@ def encoder_rnn(rnn_inputs, rnn_size, num_layers, keep_prob, sequence_length):
     """ Encoder RNN
 
         :params:
-        rnn_size: number of input tensors to the layer
-        sequence_length: length of the sequence of questions in each batch
+        rnn_inputs: model inputs (tensors returned by the model_inputs() function)
+        rnn_size: number of input tensors to the encoder layer
+        num_layers: number of layers in the RNN
+        keep_prob: control dropout rate to encoder layer
+        sequence_length: list of the length of questions in each batch
     """
     lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
     lstm_dropout = tf.contrib.rnn.DropoutWrapper(lstm, input_keep_prob=keep_prob)  # add dropout regularization
