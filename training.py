@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import tensorflow as tf
 
@@ -86,9 +87,7 @@ def apply_padding(batch_of_sequences, word2int):
         The padding should be done in such a way that each sentence of a batch has same length.
     """
     max_sequence_length = len(max(batch_of_sequences, key=len))
-    return [sequence.extend(
-        [word2int['<PAD>']] * (max_sequence_length - len(sequence))
-    ) for sequence in batch_of_sequences]
+    return [sequence + [word2int['<PAD>']] * (max_sequence_length - len(sequence)) for sequence in batch_of_sequences]
 
 
 def split_into_batches(questions, answers, batch_size, questions_words2int, answers_words2int):
@@ -112,3 +111,82 @@ training_questions = preprocessed_data['sorted_clean_questions'][training_valida
 training_answers = preprocessed_data['sorted_clean_answers'][training_validation_split:]
 validation_questions = preprocessed_data['sorted_clean_questions'][:training_validation_split]
 validation_answers = preprocessed_data['sorted_clean_answers'][:training_validation_split]
+
+
+# Train the model
+training_num_batches = len(training_questions) // batch_size
+validation_num_batches = len(validation_questions) // batch_size
+batch_index_check_training_loss = 100  # check loss after every 100 batches
+batch_index_check_validation_loss = (training_num_batches // 2) - 1  # check loss during half of each epoch
+total_training_loss_error = 0  # sum of loss after training 100 batches
+list_validation_loss_error = []  # a list is used for early stopping i.e. check if the new loss is minimum of all the previous losses encountered
+early_stopping_check = 0  # This will be incremented by 1 every time there is no improvement over the validation loss
+early_stopping_stop = 1000  # Stop training when early_stopping_check reaches this value
+checkpoint = 'chatbot_weights.ckpt'  # save the weights so that it can be loaded in order to chat with the trained chatbot
+session.run(tf.global_variables_initializer())  # Initialize the global variables for the session
+
+for epoch in range(1, epochs + 1):
+    for batch_index, (padded_questions_in_batch, padded_answers_in_batch) in enumerate(split_into_batches(
+        training_questions, training_answers, batch_size, preprocessed_data['questions_words2int'], preprocessed_data['answers_words2int']
+    )):
+        starting_time = time.time()
+        _, batch_training_loss_error = session.run([optimizer_gradient_clipping, loss_error], {
+            inputs: padded_questions_in_batch,
+            targets: padded_answers_in_batch,
+            lr: learning_rate,
+            sequence_length: padded_answers_in_batch.shape[1],
+            keep_prob: keep_probability
+        })
+        total_training_loss_error += batch_training_loss_error
+        ending_time = time.time()
+        batch_time = ending_time - starting_time
+        if batch_index % batch_index_check_training_loss == 0:
+            print('Epoch: {:>3}/{}, Batch: {:>4}/{}, Training loss error: {:>6.3f}, Training Time on {} batches: {:d} seconds'.format(
+                epoch,
+                epochs,
+                batch_index,
+                training_num_batches,
+                total_training_loss_error / batch_index_check_training_loss,  # Average training loss
+                batch_index_check_training_loss,
+                int(batch_time * batch_index_check_training_loss)
+            ))
+            total_training_loss_error = 0
+        if batch_index % batch_index_check_validation_loss == 0 and batch_index > 0:  # exclude first batch
+            total_validation_loss_error = 0
+            starting_time = time.time()
+            for batch_index_validation, (padded_questions_in_batch, padded_answers_in_batch) in enumerate(split_into_batches(
+                validation_questions, validation_answers, batch_size, preprocessed_data['questions_words2int'], preprocessed_data['answers_words2int']
+            )):
+                batch_validation_loss_error = session.run(loss_error, {  # optimizer is not required during validation, thus only one output is returned
+                    inputs: padded_questions_in_batch,
+                    targets: padded_answers_in_batch,
+                    lr: learning_rate,
+                    sequence_length: padded_answers_in_batch.shape[1],
+                    keep_prob: 1
+                })  # no dropout required during validation thus keep_prob is 1
+                total_validation_loss_error += batch_validation_loss_error
+            ending_time = time.time()
+            batch_time = ending_time - starting_time
+            average_validation_loss_error = total_validation_loss_error / validation_num_batches
+            print('Validation Loss Error {:>6.3f}, Batch Validation Time: {:d} seconds'.format(
+                average_validation_loss_error,
+                int(batch_time)
+            ))
+            learning_rate *= learning_rate_decay
+            if learning_rate < min_learning_rate:
+                learning_rate = min_learning_rate
+            list_validation_loss_error.append(average_validation_loss_error)
+            if average_validation_loss_error <= min(list_validation_loss_error):
+                print('I speak better now!')
+                early_stopping_check = 0
+                saver = tf.train.Saver()  # save the model
+                saver.save(session, checkpoint)
+            else:
+                print('Sorry, I do not speak better. Need some more practice!')
+                early_stopping_check += 1
+                if early_stopping_check == early_stopping_stop:
+                    break
+    if early_stopping_check == early_stopping_stop:
+        print('I cannot speak better than this. This is the best I can do.')
+        break
+print('Game Over')
