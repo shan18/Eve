@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 from data_preprocess import preprocess_input
@@ -71,7 +72,7 @@ with tf.name_scope('optimization'):
 
 
 def apply_padding(batch_of_sequences, word2int):
-    ''' Pad the sequences with <PAD> token
+    """ Pad the sequences with <PAD> token
 
         :example:
         Question: [ 'Who', 'are', 'you' ]
@@ -83,8 +84,31 @@ def apply_padding(batch_of_sequences, word2int):
 
         :note:
         The padding should be done in such a way that each sentence of a batch has same length.
-    '''
+    """
     max_sequence_length = len(max(batch_of_sequences, key=len))
     return [sequence.extend(
         [word2int['<PAD>']] * (max_sequence_length - len(sequence))
     ) for sequence in batch_of_sequences]
+
+
+def split_into_batches(questions, answers, batch_size, questions_words2int, answers_words2int):
+    """ Split the data into batches of questions and answers.
+
+        :note:
+        In order to work with tensorflow, the batches should be in a numpy array.
+    """
+    for batch_index in range(len(questions) // batch_size):
+        start_index = batch_index * batch_size
+        questions_in_batch = questions[start_index : start_index + batch_size]
+        answers_in_batch = answers[start_index : start_index + batch_size]
+        padded_questions_in_batch = np.array(apply_padding(questions_in_batch, questions_words2int))
+        padded_answers_in_batch = np.array(apply_padding(answers_in_batch, answers_words2int))
+        yield padded_questions_in_batch, padded_answers_in_batch
+
+
+# Split questions and answers into training and validation sets
+training_validation_split = int(len(preprocessed_data['sorted_clean_questions']) * 0.15)
+training_questions = preprocessed_data['sorted_clean_questions'][training_validation_split:]
+training_answers = preprocessed_data['sorted_clean_answers'][training_validation_split:]
+validation_questions = preprocessed_data['sorted_clean_questions'][:training_validation_split]
+validation_answers = preprocessed_data['sorted_clean_answers'][:training_validation_split]
