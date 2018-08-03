@@ -4,3 +4,7 @@ __pycache__/
 
 notes/
 chatbot_notebook.ipynb
+aws-key/
+
+checkpoint
+chatbot_weights*
