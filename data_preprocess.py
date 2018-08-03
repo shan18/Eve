@@ -170,9 +170,11 @@ def preprocess_input():
     preprocessed_data = {}
 
     # Import the dataset
+    print('Reading the dataset...')
     lines = open('dataset/movie_lines.txt', encoding='utf-8', errors='ignore').read().split('\n')
     conversations = open('dataset/movie_conversations.txt', encoding='utf-8', errors='ignore').read().split('\n')
 
+    print('Mapping strings to unique IDs...')
     id2line = map_line_to_id(lines)
     conversations_ids = create_conversation_list(conversations)
     questions, answers = separate_questions_answers(id2line, conversations_ids)
@@ -183,6 +185,7 @@ def preprocess_input():
     # create inverse mapping for answers_words2int dictionary
     answers_int2words = {w_i: w for w, w_i in answers_words2int.items()}
 
+    print('Cleaning the text and separating them into questions and answers...')
     questions_words2int, answers_words2int, answers_clean = add_last_tokens(
         questions_words2int, answers_words2int, answers_clean
     )

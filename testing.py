@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 
 from data_preprocess import clean_text, preprocess_input
-from training import batch_size, encoding_embedding_size, decoding_embedding_size, rnn_size, num_layers, keep_probability
 from seq2seq_architecture import model_inputs, seq2seq_model
 
 
@@ -17,6 +16,14 @@ preprocessed_data = preprocess_input()
 questions_words2int = preprocessed_data['questions_words2int']
 answers_words2int = preprocessed_data['answers_words2int']
 answers_int2words = preprocessed_data['answers_int2words']
+
+
+batch_size = 64
+rnn_size = 512
+num_layers = 3
+encoding_embedding_size = 512
+decoding_embedding_size = 512
+keep_probability = 0.5
 
 
 ''' Store the path to the loaded weights '''
